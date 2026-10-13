@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador — Estudo do Movimento</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#eef1f4;
+  font-family:Arial,Helvetica,sans-serif;
+  color:#182536;
+}
+.app{
+  max-width:1280px;
+  margin:20px auto;
+  padding:18px;
+}
+.top{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.top button{
+  border:2px solid #d0d7de;
+  background:white;
+  border-radius:10px;
+  padding:11px 22px;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+}
+.top button.active{
+  background:#e8f7f8;
+  border-color:#087f8c;
+  color:#087f8c;
+}
+.panel{
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 2px 8px rgba(0,0,0,.10);
+}
+.scene{
+  position:relative;
+  height:390px;
+  overflow:hidden;
+  border-radius:3px;
+  background:
+    linear-gradient(to bottom,#8bc4e8 0 55%,#4d5357 55% 76%,#4f8d48 76% 100%);
+}
+.cloud{
+  position:absolute;
+  left:13%;
+  top:10%;
+  width:210px;
+  height:70px;
+  background:rgba(255,255,255,.62);
+  border-radius:45px;
+}
+.cloud:before,.cloud:after{
+  content:"";
+  position:absolute;
+  background:rgba(255,255,255,.62);
+  border-radius:50%;
+}
+.cloud:before{width:95px;height:95px;left:50px;top:-45px}
+.cloud:after{width:70px;height:70px;left:5px;top:-12px}
+
+.road-lines{
+  position:absolute;
+  left:0;right:0;
+  top:67%;
+  height:12px;
+  background:repeating-linear-gradient(90deg,#f4d95b 0 95px,transparent 95px 175px);
+}
+.car{
+  position:absolute;
+  width:160px;
+  height:78px;
+  left:15px;
+  top:57%;
+  transform:translateY(-50%);
+}
+.car-body{
+  position:absolute;
+  left:5px;bottom:10px;
+  width:150px;height:40px;
+  background:#df302d;
+  border-radius:24px 32px 11px 11px;
+}
+.car-roof{
+  position:absolute;
+  left:42px;bottom:43px;
+  width:78px;height:38px;
+  background:#df302d;
+  border-radius:42px 45px 0 0;
+}
+.window{
+  position:absolute;
+  bottom:49px;
+  height:22px;
+  background:#b9d9e8;
+  border:3px solid #8e2220;
+}
+.w1{left:54px;width:29px;border-radius:9px 3px 0 0}
+.w2{left:86px;width:27px;border-radius:3px 9px 0 0}
+.wheel{
+  position:absolute;
+  bottom:0;
+  width:34px;height:34px;
+  background:#222;
+  border:7px solid #aeb3b5;
+  border-radius:50%;
+}
+.wheel1{left:23px}.wheel2{right:17px}
+
+.scale{
+  height:105px;
+  background:#fafafa;
+  position:relative;
+  padding:16px 50px 0;
+}
+.scale-line{
+  position:absolute;
+  left:50px;right:50px;top:42px;
+  height:5px;background:#202020;
+}
+.tick{
+  position:absolute;
+  top:20px;
+  width:5px;height:40px;
+  background:#202020;
+}
+.label{
+  position:absolute;
+  top:61px;
+  transform:translateX(-50%);
+  font-size:22px;
+}
+.readout{
+  background:#f2f5f7;
+  text-align:center;
+  padding:18px;
+  font-size:29px;
+  font-weight:700;
+}
+.readout span{color:#078596}
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding-top:20px;
+}
+.actions{display:flex;gap:12px}
+.controls button{
+  border:0;
+  border-radius:14px;
+  padding:15px 25px;
+  font-size:21px;
+  font-weight:700;
+  cursor:pointer;
+}
+.start{background:#49a438;color:white}
+.pause{background:#5b6670;color:white}
+.reset{background:#e8edf3;color:#182536}
+.speed{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-size:21px;
+}
+.speed button{
+  padding:8px 17px;
+  border-radius:13px;
+  background:#eef0f2;
+}
+@media(max-width:800px){
+  .scene{height:300px}
+  .controls{flex-direction:column}
+  .scale{padding-left:25px;padding-right:25px}
+  .scale-line{left:25px;right:25px}
+  .label{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <button class="active" data-s="1">Situação 1</button>
+    <button data-s="2">Situação 2</button>
+    <button data-s="3">Situação 3</button>
+    <button data-s="4">Situação 4</button>
+    <button data-s="5">Situação 5</button>
+  </div>
+
+  <div class="panel">
+    <div class="scene">
+      <div class="cloud"></div>
+      <div class="road-lines"></div>
+      <div class="car" id="car">
+        <div class="car-roof"></div>
+        <div class="window w1"></div>
+        <div class="window w2"></div>
+        <div class="car-body"></div>
+        <div class="wheel wheel1"></div>
+        <div class="wheel wheel2"></div>
+      </div>
+    </div>
+
+    <div class="scale">
+      <div class="scale-line"></div>
+      <div class="tick" style="left:4%"></div><div class="label" style="left:4%">0 m</div>
+      <div class="tick" style="left:20%"></div><div class="label" style="left:20%">10 m</div>
+      <div class="tick" style="left:36%"></div><div class="label" style="left:36%">20 m</div>
+      <div class="tick" style="left:52%"></div><div class="label" style="left:52%">30 m</div>
+      <div class="tick" style="left:68%"></div><div class="label" style="left:68%">40 m</div>
+      <div class="tick" style="left:84%"></div><div class="label" style="left:84%">50 m</div>
+      <div class="tick" style="left:100%"></div><div class="label" style="left:100%">60 m</div>
+    </div>
+
+    <div class="readout">
+      Tempo: <span id="time">0.0 s</span>
+      &nbsp;&nbsp;&nbsp;
+      Posição: <span id="position">0.0 m</span>
+      &nbsp;&nbsp;&nbsp;
+      Velocidade: <span id="velocity">0.0 m/s</span>
+    </div>
+
+    <div class="controls">
+      <div class="actions">
+        <button class="start" id="start">▶ Iniciar</button>
+        <button class="pause" id="pause">Ⅱ Pausar</button>
+        <button class="reset" id="reset">↻ Reiniciar</button>
+      </div>
+      <div class="speed">
+        Velocidade do simulador:
+        <button id="minus">−</button>
+        <strong id="speedText">1×</strong>
+        <button id="plus">+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const car=document.getElementById('car');
+const scene=document.querySelector('.scene');
+const timeEl=document.getElementById('time');
+const posEl=document.getElementById('position');
+const velEl=document.getElementById('velocity');
+let situation=1, t=0, running=false, last=0, raf=0, simSpeed=1;
+
+const profiles={
+  1:t=>Math.min(60,t*5),
+  2:t=>t<4?t*5:20,
+  3:t=>Math.min(60,1.0*t*t),
+  4:t=>Math.min(60,60*(1-Math.pow(Math.max(0,1-t/10),2))),
+  5:t=>t<6?t*8:Math.max(0,48-(t-6)*8)
+};
+
+const velocities={
+  1:t=>5,
+  2:t=>t<4?5:0,
+  3:t=>2*t,
+  4:t=>Math.max(0,12-1.2*t),
+  5:t=>t<6?8:-8
+};
+
+function draw(){
+  const p=Math.max(0,Math.min(60,profiles[situation](t)));
+  const max=scene.clientWidth-car.offsetWidth-20;
+  car.style.left=(10+max*(p/60))+'px';
+  timeEl.textContent=t.toFixed(1)+' s';
+  posEl.textContent=p.toFixed(1)+' m';
+  velEl.textContent=velocities[situation](t).toFixed(1)+' m/s';
+}
+function frame(now){
+  if(!running)return;
+  if(!last)last=now;
+  t+=(now-last)/1000*simSpeed;
+  last=now;
+  if(t>12)t=0;
+  draw();
+  raf=requestAnimationFrame(frame);
+}
+function start(){
+  if(running)return;
+  running=true;last=0;raf=requestAnimationFrame(frame);
+}
+function pause(){
+  running=false;cancelAnimationFrame(raf);last=0;
+}
+function reset(){
+  pause();t=0;draw();
+}
+document.getElementById('start').onclick=start;
+document.getElementById('pause').onclick=pause;
+document.getElementById('reset').onclick=reset;
+
+document.getElementById('minus').onclick=()=>{
+  simSpeed=Math.max(.25,simSpeed-.25);
+  document.getElementById('speedText').textContent=simSpeed+'×';
+};
+document.getElementById('plus').onclick=()=>{
+  simSpeed=Math.min(3,simSpeed+.25);
+  document.getElementById('speedText').textContent=simSpeed+'×';
+};
+
+document.querySelectorAll('[data-s]').forEach(btn=>{
+  btn.onclick=()=>{
+    situation=Number(btn.dataset.s);
+    document.querySelectorAll('[data-s]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    reset();
+  };
+});
+window.addEventListener('resize',draw);
+draw();
+</script>
+</body>
+</html>
